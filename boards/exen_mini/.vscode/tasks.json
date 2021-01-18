@@ -1,0 +1,41 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "cargo: build blinky",
+			"type": "shell",
+			"command": "cargo build --example blinky --features=unproven",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		},
+		{
+			"label": "cargo: flash blinky",
+			"type": "shell",
+			"command": "cargo embedZ --example blinky --features=unproven",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		},
+		{
+			"label": "cargo: build serial",
+			"type": "shell",
+			"command": "cargo build --example serial --features=unproven",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		},
+		{
+			"label": "cargo: flash serial",
+			"type": "shell",
+			"command": "cargo embed --example serial --features=unproven",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		}
+	]
+}

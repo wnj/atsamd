@@ -4,7 +4,7 @@
 #![no_std]
 #![no_main]
 
-use edgebadge::{self as hal, entry, pac, Pins};
+use edgebadge::{entry, hal, pac, Pins};
 use panic_halt as _;
 
 use hal::clock::GenericClockController;
@@ -27,12 +27,9 @@ fn main() -> ! {
 
     let mut pins = Pins::new(peripherals.PORT).split();
 
-    let usb_bus = pins.usb.init(
-        peripherals.USB,
-        &mut clocks,
-        &mut peripherals.MCLK,
-        &mut pins.port,
-    );
+    let usb_bus = pins
+        .usb
+        .init(peripherals.USB, &mut clocks, &mut peripherals.MCLK);
 
     let mut serial = SerialPort::new(&usb_bus);
     let mut led = pins.led_pin.into_open_drain_output(&mut pins.port);

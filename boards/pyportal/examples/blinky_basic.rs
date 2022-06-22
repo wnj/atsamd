@@ -3,13 +3,17 @@
 #![no_std]
 #![no_main]
 
-#[allow(unused_imports)]
-use panic_halt;
-use pyportal as hal;
+use bsp::hal;
+use pyportal as bsp;
 
+#[cfg(not(feature = "use_semihosting"))]
+use panic_halt as _;
+#[cfg(feature = "use_semihosting")]
+use panic_semihosting as _;
+
+use bsp::{entry, pin_alias};
 use hal::clock::GenericClockController;
 use hal::delay::Delay;
-use hal::entry;
 use hal::pac::{CorePeripherals, Peripherals};
 use hal::prelude::*;
 use hal::watchdog::{Watchdog, WatchdogTimeout};
@@ -28,8 +32,8 @@ fn main() -> ! {
     let mut delay = Delay::new(core.SYST, &mut clocks);
     delay.delay_ms(400u16);
 
-    let mut pins = hal::Pins::new(peripherals.PORT);
-    let mut red_led = pins.d13.into_open_drain_output(&mut pins.port);
+    let pins = bsp::Pins::new(peripherals.PORT);
+    let mut red_led: bsp::RedLed = pin_alias!(pins.red_led).into();
 
     let mut wdt = Watchdog::new(peripherals.WDT);
     wdt.start(WatchdogTimeout::Cycles256 as u8);

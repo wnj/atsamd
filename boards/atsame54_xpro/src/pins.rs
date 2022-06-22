@@ -1,6 +1,6 @@
 //! Grand Central M4 Express Pins
 
-use super::{hal, pac::MCLK, pac::SERCOM2, pac::SERCOM6, pac::SERCOM7, target_device};
+use super::{hal, pac, pac::MCLK, pac::SERCOM2, pac::SERCOM6, pac::SERCOM7};
 
 use hal::define_pins;
 use hal::gpio::{self, *};
@@ -23,7 +23,7 @@ define_pins!(
     /// Maps the pins to their names and
     /// the numbers printed on the board.
     struct Pins,
-    target_device: target_device,
+    pac: pac,
 
     pin sw0 = b31,
     pin led = c18,
@@ -369,19 +369,12 @@ impl USB {
         usb: super::pac::USB,
         clocks: &mut GenericClockController,
         mclk: &mut MCLK,
-        port: &mut Port,
     ) -> UsbBusAllocator<UsbBus> {
         clocks.configure_gclk_divider_and_source(GEN_A::GCLK2, 1, SRC_A::DFLL, false);
         let usb_gclk = clocks.get_gclk(GEN_A::GCLK2).unwrap();
         let usb_clock = &clocks.usb(&usb_gclk).unwrap();
 
-        UsbBusAllocator::new(UsbBus::new(
-            usb_clock,
-            mclk,
-            self.dm.into_function(port),
-            self.dp.into_function(port),
-            usb,
-        ))
+        UsbBusAllocator::new(UsbBus::new(usb_clock, mclk, self.dm, self.dp, usb))
     }
 }
 
@@ -416,21 +409,21 @@ impl UART_ {
 
 pub struct Analog {
     //     pub a0: Pa2<Input<Floating>>,
-//     pub a1: Pa5<Input<Floating>>,
-//     pub a2: Pb3<Input<Floating>>,
-//     pub a3: Pc0<Input<Floating>>,
-//     pub a4: Pc1<Input<Floating>>,
-//     pub a5: Pc2<Input<Floating>>,
-//     pub a6: Pc3<Input<Floating>>,
-//     pub a7: Pb4<Input<Floating>>,
-//     pub a8: Pb5<Input<Floating>>,
-//     pub a9: Pb6<Input<Floating>>,
-//     pub a10: Pb7<Input<Floating>>,
-//     pub a11: Pb8<Input<Floating>>,
-//     pub a12: Pb9<Input<Floating>>,
-//     pub a13: Pa4<Input<Floating>>,
-//     pub a14: Pa6<Input<Floating>>,
-//     pub a15: Pa7<Input<Floating>>,
+    //     pub a1: Pa5<Input<Floating>>,
+    //     pub a2: Pb3<Input<Floating>>,
+    //     pub a3: Pc0<Input<Floating>>,
+    //     pub a4: Pc1<Input<Floating>>,
+    //     pub a5: Pc2<Input<Floating>>,
+    //     pub a6: Pc3<Input<Floating>>,
+    //     pub a7: Pb4<Input<Floating>>,
+    //     pub a8: Pb5<Input<Floating>>,
+    //     pub a9: Pb6<Input<Floating>>,
+    //     pub a10: Pb7<Input<Floating>>,
+    //     pub a11: Pb8<Input<Floating>>,
+    //     pub a12: Pb9<Input<Floating>>,
+    //     pub a13: Pa4<Input<Floating>>,
+    //     pub a14: Pa6<Input<Floating>>,
+    //     pub a15: Pa7<Input<Floating>>,
 }
 
 /// QSPI flash pins

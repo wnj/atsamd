@@ -6,7 +6,7 @@
 
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
-use pygamer::{self as hal, entry, pac, Pins};
+use pygamer::{entry, hal, pac, Pins};
 
 use hal::clock::GenericClockController;
 use hal::prelude::*;
@@ -28,12 +28,9 @@ fn main() -> ! {
 
     let mut pins = Pins::new(peripherals.PORT).split();
 
-    let usb_bus = pins.usb.init(
-        peripherals.USB,
-        &mut clocks,
-        &mut peripherals.MCLK,
-        &mut pins.port,
-    );
+    let usb_bus = pins
+        .usb
+        .init(peripherals.USB, &mut clocks, &mut peripherals.MCLK);
 
     let mut serial = SerialPort::new(&usb_bus);
     let mut led = pins.led_pin.into_open_drain_output(&mut pins.port);

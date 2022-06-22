@@ -2,15 +2,16 @@
 #![no_std]
 #![no_main]
 
-extern crate cortex_m;
-extern crate feather_m4 as hal;
-#[cfg(not(feature = "use_semihosting"))]
-extern crate panic_halt;
-#[cfg(feature = "use_semihosting")]
-extern crate panic_semihosting;
+use bsp::hal;
+use feather_m4 as bsp;
 
+#[cfg(not(feature = "use_semihosting"))]
+use panic_halt as _;
+#[cfg(feature = "use_semihosting")]
+use panic_semihosting as _;
+
+use bsp::entry;
 use hal::clock::GenericClockController;
-use hal::entry;
 use hal::pac::{interrupt, CorePeripherals, Peripherals, RTC};
 use hal::prelude::*;
 use hal::rtc;
@@ -37,7 +38,7 @@ fn main() -> ! {
 
     // Configure the RTC. a 1024 Hz clock is configured for us when enabling our
     // main clock
-    let timer = rtc::Rtc::new(peripherals.RTC, 1024.hz(), &mut peripherals.MCLK);
+    let timer = rtc::Rtc::count32_mode(peripherals.RTC, 1024.hz(), &mut peripherals.MCLK);
     let mut sleeping_delay = SleepingDelay::new(timer, &INTERRUPT_FIRED);
 
     // We can use the RTC in standby for maximum power savings
@@ -65,8 +66,8 @@ fn main() -> ! {
     });
 
     // Configure our red LED and blink forever, sleeping between!
-    let mut pins = hal::Pins::new(peripherals.PORT);
-    let mut red_led = pins.d13.into_open_drain_output(&mut pins.port);
+    let pins = bsp::Pins::new(peripherals.PORT);
+    let mut red_led = pins.d13.into_push_pull_output();
     loop {
         red_led.set_low().unwrap();
         sleeping_delay.delay_ms(1_000u32);

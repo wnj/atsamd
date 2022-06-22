@@ -1,14 +1,16 @@
 #![no_std]
 #![no_main]
 
-extern crate cortex_m;
-extern crate itsybitsy_m0 as hal;
-extern crate panic_halt;
-extern crate usb_device;
-extern crate usbd_hid;
+use bsp::hal;
+use itsybitsy_m0 as bsp;
 
+#[cfg(not(feature = "use_semihosting"))]
+use panic_halt as _;
+#[cfg(feature = "use_semihosting")]
+use panic_semihosting as _;
+
+use bsp::entry;
 use hal::clock::GenericClockController;
-use hal::entry;
 use hal::pac::{interrupt, CorePeripherals, Peripherals};
 use hal::prelude::*;
 
@@ -33,30 +35,28 @@ fn main() -> ! {
         &mut peripherals.SYSCTRL,
         &mut peripherals.NVMCTRL,
     );
-    let mut pins = hal::Pins::new(peripherals.PORT);
-    let mut red_led = pins.d13.into_open_drain_output(&mut pins.port);
+    let pins = bsp::Pins::new(peripherals.PORT);
+    let mut red_led: bsp::RedLed = pins.d13.into();
     red_led.set_low().unwrap();
 
     let bus_allocator = unsafe {
-        USB_ALLOCATOR = Some(hal::usb_allocator(
+        USB_ALLOCATOR = Some(bsp::usb_allocator(
             peripherals.USB,
             &mut clocks,
             &mut peripherals.PM,
             pins.usb_dm,
             pins.usb_dp,
-            &mut pins.port,
         ));
         USB_ALLOCATOR.as_ref().unwrap()
     };
 
     unsafe {
-        USB_HID = Some(HIDClass::new(&bus_allocator, MouseReport::desc(), 60));
+        USB_HID = Some(HIDClass::new(bus_allocator, MouseReport::desc(), 60));
         USB_BUS = Some(
-            UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0x16c0, 0x27dd))
+            UsbDeviceBuilder::new(bus_allocator, UsbVidPid(0x16c0, 0x27dd))
                 .manufacturer("Fake company")
                 .product("Twitchy Mousey")
                 .serial_number("TEST")
-                .device_class(0xEF) // misc
                 .build(),
         );
     }
@@ -96,11 +96,9 @@ static mut USB_HID: Option<HIDClass<UsbBus>> = None;
 
 fn poll_usb() {
     unsafe {
-        USB_BUS.as_mut().map(|usb_dev| {
-            USB_HID.as_mut().map(|hid| {
-                usb_dev.poll(&mut [hid]);
-            });
-        });
+        if let (Some(usb_dev), Some(hid)) = (USB_BUS.as_mut(), USB_HID.as_mut()) {
+            usb_dev.poll(&mut [hid]);
+        }
     };
 }
 

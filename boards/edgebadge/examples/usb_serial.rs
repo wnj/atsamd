@@ -14,7 +14,7 @@
 //! Note leds may appear white during debug. Either build for release or add
 //! opt-level = 2 to profile.dev in Cargo.toml
 
-use edgebadge::{self as hal, entry, pac, Pins};
+use edgebadge::{entry, hal, pac, Pins};
 use panic_halt as _;
 
 use cortex_m::interrupt::free as disable_interrupts;
@@ -47,12 +47,10 @@ fn main() -> ! {
     let _ = neopixel.write((0..5).map(|_| RGB8::default()));
 
     let bus_allocator = unsafe {
-        USB_ALLOCATOR = Some(pins.usb.init(
-            peripherals.USB,
-            &mut clocks,
-            &mut peripherals.MCLK,
-            &mut pins.port,
-        ));
+        USB_ALLOCATOR = Some(
+            pins.usb
+                .init(peripherals.USB, &mut clocks, &mut peripherals.MCLK),
+        );
         USB_ALLOCATOR.as_ref().unwrap()
     };
 

@@ -1,15 +1,14 @@
 #![no_std]
 
-extern crate atsamd_hal as hal;
+pub use atsamd_hal as hal;
 
 #[cfg(feature = "rt")]
 extern crate cortex_m_rt;
 #[cfg(feature = "rt")]
 pub use cortex_m_rt::entry;
 
-#[cfg(feature = "panic_halt")]
-pub extern crate panic_halt;
-
+#[cfg(feature = "usb")]
+use gpio::v2::{AnyPin, PA24, PA25};
 #[cfg(feature = "usb")]
 use hal::clock::GenericClockController;
 #[cfg(feature = "usb")]
@@ -21,8 +20,8 @@ use hal::prelude::*;
 use hal::*;
 
 pub use hal::common::*;
-pub use hal::samd21::*;
-pub use hal::target_device as pac;
+
+pub use hal::pac;
 
 use gpio::{Floating, Input, Port};
 
@@ -31,7 +30,7 @@ define_pins!(
     /// Maps the pins to their arduino names and the numbers printed on the board.
     /// Information from: <https://github.com/arduino/ArduinoCore-samd/blob/master/variants/mkrzero/variant.cpp>
     struct Pins,
-    target_device: target_device,
+    pac: pac,
 
     /// Digital 0: PWM, TC
     pin d0 = a22,
@@ -123,20 +122,11 @@ pub fn usb_allocator(
     usb: pac::USB,
     clocks: &mut GenericClockController,
     pm: &mut pac::PM,
-    dm: gpio::Pa24<Input<Floating>>,
-    dp: gpio::Pa25<Input<Floating>>,
-    port: &mut Port,
+    dm: impl AnyPin<Id = PA24>,
+    dp: impl AnyPin<Id = PA25>,
 ) -> UsbBusAllocator<UsbBus> {
-    use gpio::IntoFunction;
-
     let gclk0 = clocks.gclk0();
     let usb_clock = &clocks.usb(&gclk0).unwrap();
 
-    UsbBusAllocator::new(UsbBus::new(
-        usb_clock,
-        pm,
-        dm.into_function(port),
-        dp.into_function(port),
-        usb,
-    ))
+    UsbBusAllocator::new(UsbBus::new(usb_clock, pm, dm, dp, usb))
 }

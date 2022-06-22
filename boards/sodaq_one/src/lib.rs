@@ -1,6 +1,6 @@
 #![no_std]
 
-extern crate atsamd_hal as hal;
+pub use atsamd_hal as hal;
 
 #[cfg(feature = "rt")]
 extern crate cortex_m_rt;
@@ -11,14 +11,16 @@ use hal::prelude::*;
 use hal::*;
 
 pub use hal::common::*;
-pub use hal::samd21::*;
-pub use hal::target_device as pac;
+
+pub use hal::pac;
 
 use gpio::{Floating, Input, Port};
 use hal::clock::GenericClockController;
 use hal::sercom::{I2CMaster3, PadPin, SPIMaster0};
 use hal::time::Hertz;
 
+#[cfg(feature = "usb")]
+use gpio::v2::{AnyPin, PA24, PA25};
 #[cfg(feature = "usb")]
 pub use hal::usb::UsbBus;
 #[cfg(feature = "usb")]
@@ -28,7 +30,7 @@ define_pins!(
     /// Maps the pins to their arduino names and
     /// the numbers printed on the board.
     struct Pins,
-    target_device: target_device,
+    pac: pac,
 
     /// D0/A0/DAC, EXTERNAL_INT_2
     /// Can act as a true analog output
@@ -175,21 +177,12 @@ pub fn usb_bus(
     usb: pac::USB,
     clocks: &mut GenericClockController,
     pm: &mut pac::PM,
-    dm: gpio::Pa24<Input<Floating>>,
-    dp: gpio::Pa25<Input<Floating>>,
-    port: &mut Port,
+    dm: impl AnyPin<Id = PA24>,
+    dp: impl AnyPin<Id = PA25>,
 ) -> UsbBusWrapper<UsbBus> {
-    use gpio::IntoFunction;
-
     let gclk0 = clocks.gclk0();
     dbgprint!("making usb clock");
     let usb_clock = &clocks.usb(&gclk0).unwrap();
     dbgprint!("got clock");
-    UsbBusWrapper::new(UsbBus::new(
-        usb_clock,
-        pm,
-        dm.into_function(port),
-        dp.into_function(port),
-        usb,
-    ))
+    UsbBusWrapper::new(UsbBus::new(usb_clock, pm, dm, dp, usb))
 }

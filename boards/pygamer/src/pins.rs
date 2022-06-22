@@ -1,11 +1,11 @@
 //! PyGamer pins
 
-use super::{hal, pac, target_device};
+use super::{hal, pac};
 
-use embedded_hal::{digital::v1_compat::OldOutputPin, timer::CountDown, timer::Periodic};
 use gpio::{Floating, Input, Output, Port, PushPull};
 use hal::clock::GenericClockController;
 use hal::define_pins;
+use hal::ehal::{digital::v1_compat::OldOutputPin, timer::CountDown, timer::Periodic};
 use hal::gpio::{self, *};
 use hal::hal::spi;
 use hal::prelude::*;
@@ -35,7 +35,7 @@ define_pins!(
     /// Maps the pins to their arduino names and
     /// the numbers printed on the board.
     struct Pins,
-    target_device: target_device,
+    pac: pac,
 
     /// Analog pin 0.  Can act as a true analog output
     /// as it has a DAC (which is not currently supported
@@ -337,7 +337,7 @@ impl Display {
                 Pb5<Output<PushPull>>,
                 Pa0<Output<PushPull>>,
             >,
-            Pwm2,
+            Pwm2<gpio::v2::PA01>,
         ),
         (),
     > {
@@ -494,19 +494,12 @@ impl USB {
         usb: pac::USB,
         clocks: &mut GenericClockController,
         mclk: &mut MCLK,
-        port: &mut Port,
     ) -> UsbBusAllocator<UsbBus> {
         clocks.configure_gclk_divider_and_source(GEN_A::GCLK2, 1, SRC_A::DFLL, false);
         let usb_gclk = clocks.get_gclk(GEN_A::GCLK2).unwrap();
         let usb_clock = &clocks.usb(&usb_gclk).unwrap();
 
-        UsbBusAllocator::new(UsbBus::new(
-            usb_clock,
-            mclk,
-            self.dm.into_function(port),
-            self.dp.into_function(port),
-            usb,
-        ))
+        UsbBusAllocator::new(UsbBus::new(usb_clock, mclk, self.dm, self.dp, usb))
     }
 }
 
@@ -574,9 +567,9 @@ pub struct QSPIFlash {
 }
 
 impl QSPIFlash {
-    pub fn init(self, mclk: &mut MCLK, port: &mut Port, qspi: QSPI) -> qspi::Qspi<qspi::OneShot> {
+    pub fn init(self, mclk: &mut MCLK, _port: &mut Port, qspi: QSPI) -> qspi::Qspi<qspi::OneShot> {
         qspi::Qspi::new(
-            mclk, port, qspi, self.sck, self.cs, self.data0, self.data1, self.data2, self.data3,
+            mclk, qspi, self.sck, self.cs, self.data0, self.data1, self.data2, self.data3,
         )
     }
 }

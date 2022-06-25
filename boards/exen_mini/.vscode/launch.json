@@ -12,8 +12,7 @@
             "configFiles": [
                 "${env:HOME}/openocd/samd21.cfg"
             ],
-            "svdFile": "${env:HOME}/svd/atmel/ATSAMD21G18AU.svd",
-            "runToMain": true
+            "svdFile": "${env:HOME}/SynologyDrive/svd/atmel/ATSAMD21G18AU.svd"
         },
         {
             "type": "cortex-debug",
@@ -26,8 +25,7 @@
             "configFiles": [
                 "${env:HOME}/openocd/samd21.cfg"
             ],
-            "svdFile": "${env:HOME}/svd/atmel/ATSAMD21G18AU.svd",
-            "runToMain": true
+            "svdFile": "${env:HOME}/SynologyDrive/svd/atmel/ATSAMD21G18AU.svd"
         }
     ]
 }

@@ -1,1 +1,1 @@
-[{"node":"PORT.DIR0","expanded":true,"format":0},{"node":"SERCOM0.USART","expanded":true,"format":0},{"node":"SERCOM1.USART","expanded":true,"format":0}]
+[{"node":"PAC0","expanded":true,"format":0,"pinned":false},{"node":"PAC0.WPCLR","expanded":true,"format":0},{"node":"SERCOM1","expanded":true,"format":0,"pinned":false},{"node":"SERCOM1.USART","expanded":true,"format":0}]

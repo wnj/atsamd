@@ -10,7 +10,8 @@
             "name": "Debug Blinky",
             "device": "atsamd21g18au",
             "configFiles": [
-                "${env:HOME}/openocd/samd21.cfg"
+                "interface/cmsis-dap.cfg",
+                "target/at91samdxx.cfg"
             ],
             "svdFile": "${env:HOME}/SynologyDrive/svd/atmel/ATSAMD21G18AU.svd"
         },
@@ -23,7 +24,8 @@
             "name": "Debug Serial",
             "device": "atsamd21g18au",
             "configFiles": [
-                "${env:HOME}/openocd/samd21.cfg"
+                "interface/cmsis-dap.cfg",
+                "target/at91samdxx.cfg"
             ],
             "svdFile": "${env:HOME}/SynologyDrive/svd/atmel/ATSAMD21G18AU.svd"
         }

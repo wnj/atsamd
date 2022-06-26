@@ -6,8 +6,8 @@
             "request": "launch",
             "servertype": "openocd",
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/examples/blinky",
-            "name": "Debug Blinky",
+            "executable": "${workspaceFolder}/target/thumbv6m-none-eabi/debug/examples/blinky_basic",
+            "name": "Debug Blinky Basic",
             "device": "atsamd21g18au",
             "configFiles": [
                 "interface/cmsis-dap.cfg",

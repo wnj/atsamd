@@ -1,14 +1,20 @@
 #![no_std]
 #![no_main]
 
-use exen_mini as hal;
+#[cfg(not(feature = "use_semihosting"))]
 use panic_halt as _;
+#[cfg(feature = "use_semihosting")]
+use panic_semihosting as _;
 
+use bsp::hal;
+use bsp::pac;
+use exen_mini as bsp;
+
+use bsp::entry;
 use hal::clock::GenericClockController;
 use hal::delay::Delay;
-use hal::entry;
-use hal::pac::{CorePeripherals, Peripherals};
 use hal::prelude::*;
+use pac::{CorePeripherals, Peripherals};
 
 #[entry]
 fn main() -> ! {
@@ -20,12 +26,11 @@ fn main() -> ! {
         &mut peripherals.SYSCTRL,
         &mut peripherals.NVMCTRL,
     );
-    let mut pins = hal::Pins::new(peripherals.PORT);
-    let mut blue_led = pins.led.into_open_drain_output(&mut pins.port);
+    let pins = bsp::Pins::new(peripherals.PORT);
+    let mut blue_led: bsp::BlueLed = pins.a8.into();
     let mut delay = Delay::new(core.SYST, &mut clocks);
-
     loop {
-        delay.delay_ms(1000u16);
+        delay.delay_ms(200u8);
         blue_led.set_high().unwrap();
         delay.delay_ms(200u8);
         blue_led.set_low().unwrap();

@@ -2,36 +2,72 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "cargo: build blinky",
+			"label": "cargo: build blinky_rtic",
 			"type": "shell",
-			"command": "cargo build --example blinky --features=unproven",
+			"command": "cargo build --example=blinky_basic",
 			"group": "build",
 			"problemMatcher": [
 				"$rustc"
 			]
 		},
 		{
-			"label": "cargo: flash blinky",
+			"label": "cargo: flash blinky_basic",
 			"type": "shell",
-			"command": "cargo embedZ --example blinky --features=unproven",
+			"command": "cargo flash --example=blinky_basic --chip atsamd21g18au",
 			"group": "build",
 			"problemMatcher": [
 				"$rustc"
 			]
 		},
 		{
-			"label": "cargo: build serial",
+			"label": "cargo: build blinky_rtic",
 			"type": "shell",
-			"command": "cargo build --example serial --features=unproven",
+			"command": "cargo build --example=blinky_rtic --features=rtic,unproven",
 			"group": "build",
 			"problemMatcher": [
 				"$rustc"
 			]
 		},
 		{
-			"label": "cargo: flash serial",
+			"label": "cargo: flash blinky_rtic",
 			"type": "shell",
-			"command": "cargo embed --example serial --features=unproven",
+			"command": "cargo flash --example=blinky_rtic --features=rtic,unproven --chip atsamd21g18au",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		},
+		{
+			"label": "cargo: build i2c",
+			"type": "shell",
+			"command": "cargo build --example=i2c --features=atsamd-hal/dma",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		},
+		{
+			"label": "cargo: flash i2c",
+			"type": "shell",
+			"command": "cargo flash --example=i2c --features=atsamd-hal/dma --chip atsamd21g18au",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		},		
+		{
+			"label": "cargo: build usb_echo",
+			"type": "shell",
+			"command": "cargo build --example=usb_echo --features=usb,unproven",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		},
+		{
+			"label": "cargo: flash usb_echo",
+			"type": "shell",
+			"command": "cargo flash --example=usb_echo --features=usb,unproven --chip atsamd21g18au",
 			"group": "build",
 			"problemMatcher": [
 				"$rustc"

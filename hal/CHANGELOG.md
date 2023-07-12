@@ -1,7 +1,30 @@
 # Unreleased Changes
 
+- Implement `Debug, Clone, Copy, Eq, PartialEq` for all HAL error types (#691).
+- Replace homebrew time library with `fugit` (#672)
+- Add `defmt` feature and derive `defmt::Format` for error types (#684, obsoletes #522).
+- Add `mcan` integration (#654)
+- Fix incorrect PAC provided for `same51g` target
+- Fix NVM User Row Mapping for `BOD12` Calibration Parameters
+- Fix `ExternalInterrupt` implementations for `eic`
+- Fix for incorrect feature gates for pins of `samd21gl` chip
+- Fix bug in `dmac` where software trigger would not work
+- Correct thumbv6 DFLL multiplier to fix USB clock correction
 - Fix failing `bsp_pins!` invocation with no aliases (#605 fixes #599)
 - Add Advanced Encryption Standard (AES) peripheral support including RustCrypto compatible backend
+- Add embedded-hal `InputPin` trait to EIC pins
+- Change NVM API
+  - Add the ability to modify the user row
+  - Add security bit and chip-erase lock management
+  - Add escape hatch to access the underlying NVMCTRL PAC
+  - Add `Nvm::region_lock` method
+  - Change flash read/write/erase method signatures
+      - `Nvm::userpage` -> `Nvm::read_userpage`
+      - `Nvm::write` -> `Nvm::write_flash`
+      - `Nvm::write_from_slice` -> `Nvm::write_flash_from_slice`
+      - `Nvm::erase` -> `Nvm::erase_flash`
+  - Refactor `Nvm::command_sync` to be less error-prone
+- Add the missing ADC traits for the SAMD11D
 
 # v0.15.1
 

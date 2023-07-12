@@ -45,7 +45,7 @@ fn main() -> ! {
             &mut clocks,
             peripherals.SERCOM7,
             &mut peripherals.MCLK,
-            58.mhz(),
+            58.MHz(),
             &mut delay,
         )
         .unwrap();
@@ -109,7 +109,7 @@ where
                 .ok();
         }
         Button::Left => {
-            Rectangle::with_corners(Point::new(90, 120), Point::new(120, 120))
+            Rectangle::with_corners(Point::new(100, 120), Point::new(130, 120))
                 .into_styled(style)
                 .draw(display)
                 .ok();
@@ -165,7 +165,7 @@ where
             .ok();
         }
         Button::Click => {
-            Circle::new(Point::new(160, 120), 15)
+            Circle::with_center(Point::new(160, 120), 15)
                 .into_styled(style)
                 .draw(display)
                 .ok();

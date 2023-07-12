@@ -50,12 +50,12 @@ where
 
 /// Clock type needed to create a new [`Config`]. [`PM`](pac::PM) for thumbv6m
 /// targets.
-#[cfg(any(feature = "samd11", feature = "samd21"))]
+#[cfg(feature = "thumbv6")]
 pub type Clock = pac::PM;
 
 /// Clock type needed to create a new [`Config`]. [`MCLK`](pac::MCLK) for
 /// thumbv7em targets.
-#[cfg(feature = "min-samd51g")]
+#[cfg(feature = "thumbv7")]
 pub type Clock = pac::MCLK;
 
 impl<P: ValidPads> Config<P> {
@@ -268,7 +268,7 @@ where
     ///
     /// Note that 3x oversampling is not supported.
     #[inline]
-    pub fn baud<B: Into<Hertz>>(mut self, baud: B, mode: BaudMode) -> Self {
+    pub fn baud(mut self, baud: Hertz, mode: BaudMode) -> Self {
         self.set_baud(baud, mode);
         self
     }
@@ -282,7 +282,7 @@ where
     ///
     /// Note that 3x oversampling is not supported.
     #[inline]
-    pub fn set_baud<B: Into<Hertz>>(&mut self, baud: B, mode: BaudMode) {
+    pub fn set_baud(&mut self, baud: Hertz, mode: BaudMode) {
         self.registers.set_baud(self.freq, baud, mode);
     }
 

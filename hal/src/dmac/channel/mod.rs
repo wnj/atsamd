@@ -8,7 +8,7 @@
 //! requires setting a priority level, as well as enabling or disabling
 //! interrupt requests (only for the specific channel being initialized).
 #![cfg_attr(
-    not(any(feature = "samd11", feature = "samd21")),
+    feature = "thumbv7",
     doc = "# Burst Length and FIFO Threshold (SAMD51/SAME5x only)
 
 The transfer burst length can be configured through the
@@ -42,7 +42,7 @@ mod reg;
 
 use reg::RegisterBlock;
 
-#[cfg(feature = "min-samd51g")]
+#[cfg(feature = "thumbv7")]
 use super::dma_controller::{BurstLength, FifoThreshold};
 
 //==============================================================================
@@ -145,11 +145,11 @@ impl<Id: ChId, S: Status> Channel<Id, S> {
         // Software reset the channel for good measure
         self._reset_private();
 
-        #[cfg(any(feature = "samd11", feature = "samd21"))]
+        #[cfg(feature = "thumbv6")]
         // Setup priority level
         self.regs.chctrlb.modify(|_, w| w.lvl().bits(lvl as u8));
 
-        #[cfg(feature = "min-samd51g")]
+        #[cfg(feature = "thumbv7")]
         self.regs.chprilvl.modify(|_, w| w.prilvl().bits(lvl as u8));
 
         Channel {
@@ -199,7 +199,7 @@ impl<Id: ChId, S: Status> Channel<Id, S> {
 
     #[inline]
     fn _trigger_private(&mut self) {
-        self.regs.swtrigctrl.write_bit(true);
+        self.regs.swtrigctrl.set_bit();
     }
 }
 
@@ -220,7 +220,7 @@ impl<Id: ChId> Channel<Id, Ready> {
     /// Set the FIFO threshold length. The channel will wait until it has
     /// received the selected number of Beats before triggering the Burst
     /// transfer, reducing the DMA transfer latency.
-    #[cfg(feature = "min-samd51g")]
+    #[cfg(feature = "thumbv7")]
     #[inline]
     pub fn fifo_threshold(&mut self, threshold: FifoThreshold) {
         self.regs
@@ -230,7 +230,7 @@ impl<Id: ChId> Channel<Id, Ready> {
 
     /// Set burst length for the channel, in number of beats. A burst transfer
     /// is an atomic, uninterruptible operation.
-    #[cfg(feature = "min-samd51g")]
+    #[cfg(feature = "thumbv7")]
     #[inline]
     pub fn burst_length(&mut self, burst_length: BurstLength) {
         self.regs
@@ -250,21 +250,17 @@ impl<Id: ChId> Channel<Id, Ready> {
         trig_act: TriggerAction,
     ) -> Channel<Id, Busy> {
         // Configure the trigger source and trigger action
-        // SAFETY: This is actually safe because we are writing the correct enum value
-        // (imported from the PAC) into the register
-        unsafe {
-            #[cfg(any(feature = "samd11", feature = "samd21"))]
-            self.regs.chctrlb.modify(|_, w| {
-                w.trigsrc().bits(trig_src as u8);
-                w.trigact().bits(trig_act as u8)
-            });
+        #[cfg(feature = "thumbv6")]
+        self.regs.chctrlb.modify(|_, w| {
+            w.trigsrc().variant(trig_src);
+            w.trigact().variant(trig_act)
+        });
 
-            #[cfg(feature = "min-samd51g")]
-            self.regs.chctrla.modify(|_, w| {
-                w.trigsrc().bits(trig_src as u8);
-                w.trigact().bits(trig_act as u8)
-            });
-        }
+        #[cfg(feature = "thumbv7")]
+        self.regs.chctrla.modify(|_, w| {
+            w.trigsrc().variant(trig_src);
+            w.trigact().variant(trig_act)
+        });
 
         // Start channel
         self.regs.chctrla.modify(|_, w| w.enable().set_bit());

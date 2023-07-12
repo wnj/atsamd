@@ -21,14 +21,14 @@ pub type Duration = fugit::Duration<u32, 1, 32_768>;
 use rtic_monotonic::Monotonic;
 
 // SAMx5x imports
-#[cfg(feature = "min-samd51g")]
+#[cfg(feature = "thumbv7")]
 use crate::pac::{
     rtc::mode0::ctrla::PRESCALER_A, rtc::mode0::CTRLA as MODE0_CTRLA,
     rtc::mode2::CTRLA as MODE2_CTRLA, MCLK as PM,
 };
 
 // SAMD11/SAMD21 imports
-#[cfg(any(feature = "samd11", feature = "samd21"))]
+#[cfg(feature = "thumbv6")]
 use crate::pac::{
     rtc::mode0::ctrl::PRESCALER_A, rtc::mode0::CTRL as MODE0_CTRLA,
     rtc::mode2::CTRL as MODE2_CTRLA, PM,
@@ -112,25 +112,25 @@ impl<Mode: RtcMode> Rtc<Mode> {
 
     #[inline]
     fn mode0_ctrla(&self) -> &MODE0_CTRLA {
-        #[cfg(feature = "min-samd51g")]
+        #[cfg(feature = "thumbv7")]
         return &self.mode0().ctrla;
-        #[cfg(any(feature = "samd11", feature = "samd21"))]
+        #[cfg(feature = "thumbv6")]
         return &self.mode0().ctrl;
     }
 
     #[inline]
     fn mode2_ctrla(&self) -> &MODE2_CTRLA {
-        #[cfg(feature = "min-samd51g")]
+        #[cfg(feature = "thumbv7")]
         return &self.mode2().ctrla;
-        #[cfg(any(feature = "samd11", feature = "samd21"))]
+        #[cfg(feature = "thumbv6")]
         return &self.mode2().ctrl;
     }
 
     #[inline]
     fn sync(&self) {
-        #[cfg(feature = "min-samd51g")]
+        #[cfg(feature = "thumbv7")]
         while self.mode2().syncbusy.read().bits() != 0 {}
-        #[cfg(any(feature = "samd11", feature = "samd21"))]
+        #[cfg(feature = "thumbv6")]
         while self.mode2().status.read().syncbusy().bit_is_set() {}
     }
 
@@ -174,7 +174,7 @@ impl<Mode: RtcMode> Rtc<Mode> {
         self.sync();
 
         // enable clock sync on SAMx5x
-        #[cfg(feature = "min-samd51g")]
+        #[cfg(feature = "thumbv7")]
         {
             self.mode2_ctrla().modify(|_, w| {
                 w.clocksync().set_bit() // synchronize the CLOCK register
@@ -191,7 +191,11 @@ impl<Mode: RtcMode> Rtc<Mode> {
     /// clock to be running at 1024 Hz.
     pub fn into_clock_mode(mut self) -> Rtc<ClockMode> {
         // The max divisor is 1024, so to get 1 Hz, we need a 1024 Hz source.
-        assert_eq!(self.rtc_clock_freq.0, 1024_u32, "RTC clk not 1024 Hz!");
+        assert_eq!(
+            self.rtc_clock_freq.to_Hz(),
+            1024_u32,
+            "RTC clk not 1024 Hz!"
+        );
 
         self.sync();
         self.enable(false);
@@ -204,7 +208,7 @@ impl<Mode: RtcMode> Rtc<Mode> {
         });
 
         // enable clock sync on SAMx5x
-        #[cfg(feature = "min-samd51g")]
+        #[cfg(feature = "thumbv7")]
         {
             self.mode2_ctrla().modify(|_, w| {
                 w.clocksync().set_bit() // synchronize the CLOCK register
@@ -245,7 +249,7 @@ impl Rtc<Count32Mode> {
     #[inline]
     pub fn count32(&self) -> u32 {
         // synchronize this read on SAMD11/21. SAMx5x is automatically synchronized
-        #[cfg(any(feature = "samd11", feature = "samd21"))]
+        #[cfg(feature = "thumbv6")]
         {
             self.mode0().readreq.modify(|_, w| w.rcont().set_bit());
             self.sync();
@@ -275,7 +279,7 @@ impl Rtc<Count32Mode> {
         &mut self,
         timeout: T,
     ) -> &Self {
-        let params = TimerParams::new_us(timeout, self.rtc_clock_freq.0);
+        let params = TimerParams::new_us(timeout, self.rtc_clock_freq);
         let divider = params.divider;
 
         // Disable the timer while we reconfigure it
@@ -307,7 +311,7 @@ impl Rtc<ClockMode> {
     /// Returns the current clock/calendar value.
     pub fn current_time(&self) -> Datetime {
         // synchronize this read on SAMD11/21. SAMx5x is automatically synchronized
-        #[cfg(any(feature = "samd11", feature = "samd21"))]
+        #[cfg(feature = "thumbv6")]
         {
             self.mode2().readreq.modify(|_, w| w.rcont().set_bit());
             self.sync();
@@ -345,7 +349,7 @@ impl CountDown for Rtc<Count32Mode> {
     where
         T: Into<Self::Time>,
     {
-        let params = TimerParams::new_us(timeout, self.rtc_clock_freq.0);
+        let params = TimerParams::new_us(timeout, self.rtc_clock_freq);
         let divider = params.divider;
         let cycles = params.cycles;
 
@@ -415,22 +419,19 @@ pub struct TimerParams {
 impl TimerParams {
     /// calculates RTC timer paramters based on the input frequency-based
     /// timeout.
-    pub fn new<T>(timeout: T, src_freq: u32) -> Self
-    where
-        T: Into<Hertz>,
-    {
+    pub fn new(timeout: impl Into<Hertz>, src_freq: impl Into<Hertz>) -> Self {
         let timeout = timeout.into();
-        let ticks: u32 = src_freq / timeout.0.max(1);
+        let src_freq = src_freq.into();
+        let ticks: u32 = src_freq.to_Hz() / timeout.to_Hz().max(1);
         Self::new_from_ticks(ticks)
     }
 
     /// calculates RTC timer paramters based on the input period-based timeout.
-    pub fn new_us<T>(timeout: T, src_freq: u32) -> Self
-    where
-        T: Into<Nanoseconds>,
-    {
+    pub fn new_us(timeout: impl Into<Nanoseconds>, src_freq: impl Into<Hertz>) -> Self {
         let timeout = timeout.into();
-        let ticks: u32 = (timeout.0 as u64 * src_freq as u64 / 1_000_000_000_u64) as u32;
+        let src_freq = src_freq.into();
+        let ticks: u32 =
+            (timeout.to_nanos() as u64 * src_freq.to_Hz() as u64 / 1_000_000_000_u64) as u32;
         Self::new_from_ticks(ticks)
     }
 

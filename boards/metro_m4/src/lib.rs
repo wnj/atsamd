@@ -134,6 +134,7 @@ hal::bsp_pins!(
         name: sda
         aliases: {
             AlternateD: Sda
+            AlternateB: A6
         }
     }
     PB03 {
@@ -141,6 +142,7 @@ hal::bsp_pins!(
         name: scl
         aliases: {
             AlternateD: Scl
+            AlternateB: A7
         }
     }
 
@@ -219,7 +221,7 @@ hal::bsp_pins!(
         /// The USB D- pad
         name: usb_dm
         aliases: {
-            AlternateG: UsbDm
+            AlternateH: UsbDm
         }
 
     }
@@ -227,7 +229,7 @@ hal::bsp_pins!(
         /// The USB D+ pad
         name: usb_dp
         aliases: {
-            AlternateG: UsbDp
+            AlternateH: UsbDp
         }
 
     }
@@ -248,7 +250,7 @@ pub type Spi = spi::Spi<spi::Config<SpiPads>, spi::Duplex>;
 /// SPI Master in SPI Mode 0.
 pub fn spi_master(
     clocks: &mut GenericClockController,
-    baud: impl Into<Hertz>,
+    baud: Hertz,
     sercom: SpiSercom,
     mclk: &mut pac::MCLK,
     sclk: impl Into<Sclk>,
@@ -358,8 +360,11 @@ pub fn usb_allocator(
     dm: impl Into<UsbDm>,
     dp: impl Into<UsbDp>,
 ) -> UsbBusAllocator<UsbBus> {
-    let gclk0 = clocks.gclk0();
-    let clock = &clocks.usb(&gclk0).unwrap();
+    use pac::gclk::{genctrl::SRC_A, pchctrl::GEN_A};
+
+    clocks.configure_gclk_divider_and_source(GEN_A::GCLK2, 1, SRC_A::DFLL, false);
+    let usb_gclk = clocks.get_gclk(GEN_A::GCLK2).unwrap();
+    let usb_clock = &clocks.usb(&usb_gclk).unwrap();
     let (dm, dp) = (dm.into(), dp.into());
-    UsbBusAllocator::new(UsbBus::new(clock, mclk, dm, dp, usb))
+    UsbBusAllocator::new(UsbBus::new(usb_clock, mclk, dm, dp, usb))
 }
